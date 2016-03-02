@@ -10,6 +10,7 @@
 #include "DHT.h"
 #include <SFE_BMP180.h>
 #include <Wire.h>
+#include <Process.h>
 
 //TFT
 #include <SPI.h>
@@ -57,12 +58,16 @@ void setup() {
     while(1);
   }
   tft.println("BMP180 initialized");
+  
+  //Initialize Bridge
+  Bridge.begin();
 }
 
 void loop() {
   char status;
   double T,P;
   float h,t,hi;
+  Process p;
   
   // Read humidit
   h = dht.readHumidity();
@@ -134,10 +139,14 @@ void loop() {
   tft.print(P, 2);
   tft.println(" mb\n");
   
-  
   //Check connection to the internet
   tft.setCursor(0,120);
-  tft.print("Test");
+  p.runShellCommand("/usr/bin/pretty-wifi-info.lua | grep IP | cut -d: -f2 | tr -d ' '");
+  while(p.available()>0){
+    char c = p.read();
+    tft.print(c);
+    Serial.print(c); 
+  }
   
   // Add delay between measurements
   delay(DELAY);
