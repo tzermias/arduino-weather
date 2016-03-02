@@ -11,10 +11,23 @@
 #include <SFE_BMP180.h>
 #include <Wire.h>
 
+//TFT
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <TFT_ILI9163C.h>
+
 #define DHTPIN 4     
 #define ALTITUDE 115     // My altitude
 #define DHTTYPE DHT22    // DHT 22  (AM2302)
 #define DELAY 5000       // Delay between measurements in ms
+
+#define RED  0xF800
+#define BLUE 0x001F
+#define YELLOW 0xFFE0
+
+// TFT Pinout
+#define __CS 10
+#define __DC 9
 
 // Initialize DHT sensor for normal 16mhz Arduino
 DHT dht(DHTPIN, DHTTYPE);
@@ -22,26 +35,34 @@ DHT dht(DHTPIN, DHTTYPE);
 // Initialize BMP180
 SFE_BMP180 bmp;
 
+// Initialize TFT
+TFT_ILI9163C tft = TFT_ILI9163C(__CS, __DC);
+
 void setup() {
   Serial.begin(9600);
+  //Initialize TFT
+  tft.begin();
+  tft.fillScreen();
+  
+  tft.println("Screen initialized");
+  
  
   // Initialize DHT
   dht.begin();
+  tft.println("DHT initialized");
   
   // Initialize BMP180
   if(!bmp.begin()) {
     Serial.print("Error initializing BMP180!");
     while(1);
   }
+  tft.println("BMP180 initialized");
 }
 
 void loop() {
   char status;
   double T,P;
   float h,t,hi;
-
-  // Add delay between measurements
-  delay(DELAY);
   
   // Read humidit
   h = dht.readHumidity();
@@ -81,14 +102,43 @@ void loop() {
   Serial.print(" % ");
   Serial.print("Temperature: "); 
   Serial.print(t);
-  Serial.print(" *C ");
+  Serial.print(" °C ");
   Serial.print("Heat index: ");
   Serial.print(hi-32);
-  Serial.print(" *C ");
-  Serial.print("Humidity: ");
+  Serial.print(" °C ");
+  Serial.print("Barometric: ");
   Serial.print(P,2);
   Serial.print(" mb ");
   Serial.print("Temp2: ");
   Serial.print(T);
-  Serial.println(" *C");
+  Serial.println(" °C");
+  
+  
+  tft.fillScreen();
+  tft.setCursor(0,0);
+  tft.setTextColor(RED);
+  tft.setTextSize(1);
+  tft.println("Temperature");
+  tft.print(t);
+  tft.print(" oC (");
+  tft.print(T);
+  tft.println(" oC)\n");
+  tft.setTextColor(BLUE);
+  tft.setTextSize(1.3);
+  tft.println("Humidity");
+  tft.print(h);
+  tft.println(" %\n");
+  tft.setTextColor(YELLOW);
+  tft.setTextSize(1);
+  tft.println("Bar. Pressure");
+  tft.print(P, 2);
+  tft.println(" mb\n");
+  
+  
+  //Check connection to the internet
+  tft.setCursor(0,120);
+  tft.print("Test");
+  
+  // Add delay between measurements
+  delay(DELAY);
 }
